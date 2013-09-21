@@ -13,7 +13,6 @@
 	<properties>
 		<spring.version>3.2.4.RELEASE</spring.version>
 		<junit.version>4.11</junit.version>
-		<caliper.version>1.0-beta-1</caliper.version>
 		<jdk.version>1.7</jdk.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -23,12 +22,6 @@
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-core</artifactId>
 			<version>${spring.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.google.caliper</groupId>
-			<artifactId>caliper</artifactId>
-			<version>${caliper.version}</version>
 		</dependency>
 
 		<dependency>
