@@ -6,6 +6,8 @@ import org.springframework.util.StopWatch;
 
 public class MonteCarloNpv {
 
+	private static final int NUM_ITER = 10000000;
+	
 	private Distribution initial;
 	private Distribution year1;
 	private Distribution year2;
@@ -26,7 +28,7 @@ public class MonteCarloNpv {
 
 	public StatsCollector parallel(int minChunkSize, int numChunks) {
 		ForkJoinPool pool = new ForkJoinPool();
-		NpvTask task = new NpvTask(10, 1000000, rate, initial, year1, year2,
+		NpvTask task = new NpvTask(10, NUM_ITER, rate, initial, year1, year2,
 				year3, year4, year5);
 		task.setMinChunkSize(minChunkSize);
 		task.setNumChunks(numChunks);
@@ -34,10 +36,29 @@ public class MonteCarloNpv {
 	}
 
 	public StatsCollector sequential() {
-		NpvTask task = new NpvTask(10, 1000000, rate, initial, year1, year2,
+		NpvTask task = new NpvTask(10, NUM_ITER, rate, initial, year1, year2,
 				year3, year4, year5);
-		task.setFork(false);
+		task.setMinChunkSize(NUM_ITER + 1);
+		// Safe because it won't fork
 		return task.compute();
+	}
+
+	private static void oneSize(String name, int children, int chunkSize, MonteCarloNpv npv, StopWatch sw) {
+		String swName = name + " (children=" + children + ", min fork size="
+				+ chunkSize + ")";
+		System.out.println(swName);
+		sw.start(swName);
+		StatsCollector stats = npv.parallel(chunkSize, children);
+		sw.stop();
+		System.out.println(stats);
+	}
+	
+	private static void allSizes(String name, int children, MonteCarloNpv npv, StopWatch sw) {
+		int[] chunkSizes = { 100, 500, 1000, 2000 };
+
+		for (int i : chunkSizes) {
+			oneSize(name, children, i, npv, sw);
+		}
 	}
 
 	public static void main(String args[]) {
@@ -47,17 +68,14 @@ public class MonteCarloNpv {
 		sw.start("Sequential");
 		npv.sequential();
 		sw.stop();
+
+		allSizes("DivideByTwo", 2, npv, sw);
+		allSizes("DivideByP", Runtime.getRuntime().availableProcessors(), npv, sw);
+		allSizes("Sqrt(n)", -1, npv, sw);
+
+		int chunkSize = 500;
+		oneSize("Parfor", (int)Math.ceil(NUM_ITER/chunkSize), chunkSize, npv, sw);
 		
-		int[] chunkSizes = { 100, 500, 1000, 2000 };
-		
-		for (int i = 2; i < 7; i++) {
-			for (int j: chunkSizes) {
-				String name = "Parallel (children=" + i + ", min fork size=" + j + ")";
-				sw.start(name);
-				npv.parallel(j, i);
-				sw.stop();
-			}
-		}
 		System.out.println(sw.prettyPrint());
 	}
 

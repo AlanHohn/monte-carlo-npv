@@ -8,9 +8,8 @@ public class NpvTask extends RecursiveTask<StatsCollector> {
 
 	private static final long serialVersionUID = -3375054929832400598L;
 
-	private boolean fork = true;
 	private int minChunkSize = 100;
-	private int numChunks = 5;
+	private int numChunks = 2;
 	private double min;
 	private double max;
 	private int numBuckets;
@@ -37,10 +36,6 @@ public class NpvTask extends RecursiveTask<StatsCollector> {
 		this.flows = flows;
 	}
 
-	public void setFork(boolean fork) {
-		this.fork = fork;
-	}
-
 	public void setMinChunkSize(int minChunkSize) {
 		this.minChunkSize = minChunkSize;
 	}
@@ -49,19 +44,27 @@ public class NpvTask extends RecursiveTask<StatsCollector> {
 		this.numChunks = numChunks;
 	}
 
+	public int calcNumChunks(int n) {
+		int nc = (int)Math.ceil(Math.sqrt(n/minChunkSize));
+		return nc;
+	}
+	
 	@Override
 	protected StatsCollector compute() {
 		StatsCollector collector = new StatsCollector(min, max, numBuckets);
-		if (numIterations < minChunkSize || !fork) {
+		int children = (numChunks < 0) ? calcNumChunks(numIterations) : numChunks;
+		if (numIterations <= minChunkSize || children == 1) {
 			for (int i = 0; i < numIterations; i++) {
 				collector.addObs(NetPresentValue.npv(sampleFlows(),
 						rate.sample()));
 			}
 		} else {
-			List<NpvTask> subTasks = new ArrayList<>(numChunks);
-			for (int i = 0; i < numChunks; i++) {
+			List<NpvTask> subTasks = new ArrayList<>(children);
+			for (int i = 0; i < children; i++) {
 				NpvTask subTask = new NpvTask(min, max, numBuckets,
-						numIterations / numChunks, rate, flows);
+						numIterations / children, rate, flows);
+				subTask.setMinChunkSize(minChunkSize);
+				subTask.setNumChunks(numChunks);
 				subTasks.add(subTask);
 			}
 			invokeAll(subTasks);

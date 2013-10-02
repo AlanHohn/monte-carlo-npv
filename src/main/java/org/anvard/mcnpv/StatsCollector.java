@@ -4,6 +4,7 @@ import org.springframework.util.Assert;
 
 public class StatsCollector {
 
+	private int instances;
 	private double min;
 	private double range;
 	private double mean;
@@ -13,12 +14,17 @@ public class StatsCollector {
 	
 	public StatsCollector(double min, double max, int numBuckets) {
 		Assert.isTrue(numBuckets > 0);
+		this.instances = 1;
 		this.min = min;
 		this.range = max - min;
 		this.numBuckets = numBuckets;
 		this.mean = 0;
 		this.numObs = 0;
 		this.buckets = new int[numBuckets];
+	}
+	
+	public int getInstances() {
+		return instances;
 	}
 	
 	public int[] getBuckets() {
@@ -37,6 +43,7 @@ public class StatsCollector {
 		Assert.isTrue(Math.abs(min - collector.min) < 0.000001);
 		Assert.isTrue(Math.abs(range - collector.range) < 0.000001);
 		Assert.isTrue(numBuckets == collector.numBuckets);
+		instances += collector.instances;
 		mean = ((numObs * mean) + (collector.numObs * collector.mean)) / numObs + collector.numObs;
 		numObs += collector.numObs;
 		for (int i = 0; i < numBuckets; i++) {
@@ -50,6 +57,8 @@ public class StatsCollector {
 		sb.append(System.lineSeparator());
 		sb.append("--------------------");
 		sb.append(System.lineSeparator());
+		sb.append(System.lineSeparator());
+		sb.append(String.format("Number of instances: %d", instances));
 		sb.append(System.lineSeparator());
 		sb.append(String.format("Mean: %2f", mean));
 		sb.append(System.lineSeparator());
