@@ -1,4 +1,4 @@
-monte-carlo-npv
+monte-carlo-npv [![Build Status](https://travis-ci.org/AlanHohn/monte-carlo-npv.png)](https://travis-ci.org/AlanHohn/monte-carlo-npv])
 ===============
 
 This small application provides a Net Present Value calculator that allows for
