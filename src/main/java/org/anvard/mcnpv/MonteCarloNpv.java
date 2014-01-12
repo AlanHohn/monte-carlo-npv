@@ -66,8 +66,9 @@ public class MonteCarloNpv {
 		StopWatch sw = new StopWatch("Monte Carlo NPV");
 
 		sw.start("Sequential");
-		npv.sequential();
+		StatsCollector stats = npv.sequential();
 		sw.stop();
+    System.out.println(stats);
 
 		allSizes("DivideByTwo", 2, npv, sw);
 		allSizes("DivideByP", Runtime.getRuntime().availableProcessors(), npv, sw);
